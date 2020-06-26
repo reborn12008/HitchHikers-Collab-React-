@@ -7,6 +7,7 @@ import LoginForm from "./components/loginform";
 import MessageForm from "./components/messageForm";
 import RegistForm from "./components/registForm";
 import SearchPageContent from "./components/eventSearchers";
+import ChatBox from "./components/chatBox";
 
 class App extends React.Component{
   render(){
@@ -29,7 +30,7 @@ class HomePage extends React.Component{
   render(){
     let loginForm=<LoginForm />
     if(localStorage.getItem("logged")==1){
-      loginForm = ""
+      loginForm = <ChatBox />
     }
     return (
       <div>

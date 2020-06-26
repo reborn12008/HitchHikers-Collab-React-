@@ -17,17 +17,28 @@ var categories = {
 class SearchPageContent extends React.Component{
 	render() {
     return (
-		<div className="container">
-			<a className="btn btn-primary" style={{ marginRight:"10px" }} href="/festivals/categorySearch" > Pesquisar por categoria </a>
-			<a className="btn btn-primary" href="/festivals/textSearch"> Pesquisar por palavras-chave </a>
+		<>
 			<Switch>
+				<Route exact path="/festivals" component={SearchTypeToggler}/>
 				<Route exact path="/festivals/categorySearch" component={CategorySearch}/>
 				<Route exact path="/festivals/textSearch" component={TextSearch}/>
-				<Route path="/festivals/textSearch/search=" component={SearchResults}/>
+				<Route exact path="/festivals/searchResults=" component={SearchResults}/>
         	</Switch>        
-			<br/><br/>
-		</div>
+			
+		</>
 	);
+	}
+}
+
+class SearchTypeToggler extends React.Component{
+	render(){
+		return(
+			<div className="container">
+				<a className="btn btn-primary" style={{ marginRight:"10px" }} href="/festivals/categorySearch" > Pesquisar por categoria </a>
+				<a className="btn btn-primary" href="/festivals/textSearch"> Pesquisar por palavras-chave </a>
+				<br/><br/>
+			</div>
+		);
 	}
 }
 
@@ -82,13 +93,16 @@ class CategorySearch extends React.Component{
 				<option value="select">...</option>
 				{ this.state.countries.map(countries => <option>{countries.name}</option>)}
 			</select>
-			<button className ="btn btn-info ml-4 mt-3" id="textSearch" onClick={this.handleSearchCategory.bind(this)}>Procurar</button>
+			<Link className ="btn btn-info ml-3" id="textSearch" to={{ pathname: "/festivals/searchResults=", 
+																	state:{startDate : this.state.startDate,
+																		endDate: this.state.endDate,
+																		categorySelected : this.state.categorySelected,
+																		countrySelected : this.state.countrySelected,
+																		} }}>
+				Procurar
+			</Link><br/>
 		</div>
     );
-	}
-
-	handleSearchCategory(){
-		console.log("S-" + this.state.startDate + " --- E -" + this.state.endDate + "\n Country - " + this.state.countrySelected + "Category - " + this.state.categorySelected);
 	}
 }
 
@@ -107,9 +121,9 @@ class TextSearch extends React.Component{
 		<div className="mt-3">
 			<br/><br/>
 		    <input id="text-search" type="text" onChange={this.handleSearchText.bind(this)} />
-			<Link to={{ pathname: "/festivals/textSearch/search=", state:{textInput : this.state.textkeysearch} }}>
-				<a class ="btn btn-info ml-3" id="textSearch" href={"/festivals/textSearch/search="} >Procurar</a><br/>
-			</Link>
+			<Link className ="btn btn-info ml-3" id="textSearch" to={{ pathname: "/festivals/searchResults=", state:{textInput : this.state.textkeysearch} }}>
+				Procurar
+			</Link><br/>
 			<span>*Insira uma palavra-chave - pode ser o nome do evento, o sítio onde irá decorrer, entre outros...</span>
 			
 		</div>
@@ -118,18 +132,59 @@ class TextSearch extends React.Component{
 }
 
 class SearchResults extends React.Component{
+	constructor(props){
+		super(props);
+
+		if(this.props.location.state.textInput != null){
+			this.setState({apiSettings: {params : {"q" : this.props.location.state.textInput}}})
+		}
+		if(this.props.location.state.startDate == null){
+			this.setState({apiSettings: {params : {"start.gte" : this.props.location.state.startDate}}})
+		}
+		if(this.props.location.state.endDate == null){
+			this.setState({apiSettings: {params : {"start.lte" : this.props.location.state.endDate}}})
+		}
+		if(this.props.location.state.startDate == null){
+			this.setState({apiSettings: {params : {"country" : this.props.location.state.countrySelected}}})
+		}
+		if(this.props.location.state.startDate == null){
+			this.setState({apiSettings: {params : {"category" : this.props.location.state.categorySelected}}})
+		}
+
+		this.state ={
+			logged : localStorage.getItem("logged"),
+			requestURL : "https://api.predicthq.com/v1/events",
+			apiSettings:{
+				headers: {
+					"Accept" : "application/json",
+					"Authorization" : "Bearer JK2DXXqhuW8FF-FHbPqlg3cdbVaqPLn8Siaies--",
+				},
+				params : {
+
+				}
+			},
+			searchResultsList : [],
+		}
+	}
 	componentDidMount(){
-		const textInput = this.props.match.params
-		//TODO fetch()
+		axios.get(this.state.requestURL, this.state.apiSettings).then( res => { const searchResultsList = res.data; this.setState({ searchResultsList : searchResultsList.results })});
 	}
 		
 	render() {
-		return(
-			<div>
-				<p>IARARARA</p>
-				<p>{this.textInput}</p>
-			</div>
-		);
+		if(this.state.logged == 1)
+		{
+			return(
+				<ul>
+					{ this.state.searchResultsList.map(searchResultsList => <button class="list-group-item list-group-item-action">{searchResultsList.title}</button>)}
+				</ul>
+			);
+		}else{
+			return(
+				<ul>
+					{ this.state.searchResultsList.map(searchResultsList => <li class="list-group-item">{searchResultsList.title}</li>)}
+				</ul>
+			);
+		}
 	}
 }
 
