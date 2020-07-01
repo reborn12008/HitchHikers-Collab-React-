@@ -107,7 +107,7 @@ class RegistPage extends React.Component{
     return (
       <div>
         <Header />
-	<RegistForm />
+	      <RegistForm />
         <Footer />
       </div>
     );
@@ -120,7 +120,6 @@ class EventSearchPage extends React.Component{
       <div>
         <Header />
 	<div className="container">
-		<p>Aqui poderá consultar todos os eventos aderentes!<br/> Encontre o seu evento através de detalhes na pesquisa por palavras-chave ou preencha os campos de acordo, na pesquisa por categorias.</p><br/><br/>
 		<SearchPageContent />
 	</div>
         <Footer />
