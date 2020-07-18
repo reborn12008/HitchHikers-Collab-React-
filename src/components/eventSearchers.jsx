@@ -22,7 +22,7 @@ class SearchPageContent extends React.Component{
 				<Route exact path="/festivals" component={SearchTypeToggler}/>
 				<Route exact path="/festivals/categorySearch" component={CategorySearch}/>
 				<Route exact path="/festivals/textSearch" component={TextSearch}/>
-				<Route exact path="/festivals/textSearchResults=" component={TextSearchResults}/>
+				<Route path="/festivals/textSearchResults=" component={TextSearchResults}/>
 				<Route exact path="/festivals/categorySearchResults=" component={CategorySearchResults}/>
 				<Route exact path="/juvafestival" component={EventInfo}/>
 				<Route exact path="/giverideForm" component={GiveRideForm}/>
@@ -89,13 +89,11 @@ class CategorySearch extends React.Component{
 						<label className="col-form-label col-form-label-lg" style={{ margin:"0px 10px" }}>e</label>
 						<input type="date" id="endDate" onChange={this.handleEndDateChange.bind(this)}/> <br/>
 					</div>
-
 				<label htmlFor="type-select" className="col-form-label col-form-label-lg" style={{ margin:"0px 10px" }}>Selecione um género:</label>
 				<select className="custom-select custom-select-lg mb-3 ml-4" id="type-select" onChange={this.handleCategoryChange.bind(this)}>
 					<option value="select">...</option>
 					{ Object.keys(categories).map((key, index) =>( <option value={key}> {categories[key]} </option>))}
 				</select><br/>
-
 				<label htmlFor="country-select" className="col-form-label col-form-label-lg" style={{ margin:"0px 10px" }}>Selecione o país onde decorrerá o evento</label>
 				<select className="custom-select custom-select-lg mb-3 ml-4" id="country-select" onChange={this.handleCountryChange.bind(this)}>
 					<option value="select">...</option>
@@ -132,7 +130,8 @@ class TextSearch extends React.Component{
 			<div className="mt-3 ml-4">
 				<br/><br/>
 				<input id="text-search" type="text" onChange={this.handleSearchText.bind(this)} />
-				<Link className ="btn btn-info ml-3" id="textSearch" to={{ pathname: "/festivals/textSearchResults=", state:{textInput : this.state.textkeysearch} }}>
+				<Link className ="btn btn-info ml-3" id="textSearch" to={{ pathname: "/festivals/textSearchResults=", state:{textInput : this.state.textkeysearch,
+																																searchOffset : 0} }}>
 					Procurar
 				</Link><br/>
 				<span>*Insira uma palavra-chave - pode ser o nome do evento, o sítio onde irá decorrer, entre outros...</span>
@@ -156,37 +155,121 @@ class TextSearchResults extends React.Component{
 					"Authorization" : "Bearer JK2DXXqhuW8FF-FHbPqlg3cdbVaqPLn8Siaies--",
 				},
 				params : {
-					"q" : this.props.location.state.textInput
+					"offset": 0,
+					"q" : this.props.location.state.textInput,
 				}
 			},
+			resultAmount : 0,
 			searchResultsList : [],
 		}
 	}
+	nextpage(e) {
+		let newOffset =Number(e.target.value) + 10;
+		console.log(newOffset);
+		this.setState({
+			logged : localStorage.getItem("logged"),
+			requestURL : "https://api.predicthq.com/v1/events",
+			apiSettings:{
+				headers: {
+					"Accept" : "application/json",
+					"Authorization" : "Bearer JK2DXXqhuW8FF-FHbPqlg3cdbVaqPLn8Siaies--",
+				},
+				params : {
+					"offset": newOffset,
+					"q" : this.props.location.state.textInput,
+				}
+			},
+			resultAmount : 0,
+			searchResultsList : [],
+		});
+		axios.get(this.state.requestURL, this.state.apiSettings).then( res => { const searchResultsList = res.data; this.setState({ searchResultsList : searchResultsList.results,
+			resultAmount : searchResultsList.count })});
+	}
+
+	previouspage(e) {
+		let newOffset =Number(e.target.value) - 10;
+		console.log(newOffset);
+		this.setState({
+			logged : localStorage.getItem("logged"),
+			requestURL : "https://api.predicthq.com/v1/events",
+			apiSettings:{
+				headers: {
+					"Accept" : "application/json",
+					"Authorization" : "Bearer JK2DXXqhuW8FF-FHbPqlg3cdbVaqPLn8Siaies--",
+				},
+				params : {
+					"offset": newOffset,
+					"q" : this.props.location.state.textInput,
+				}
+			},
+			resultAmount : 0,
+			searchResultsList : [],
+		});
+		axios.get(this.state.requestURL, this.state.apiSettings).then( res => { const searchResultsList = res.data; this.setState({ searchResultsList : searchResultsList.results,
+			resultAmount : searchResultsList.count })});
+	}
+
 	componentDidMount(){
-		axios.get(this.state.requestURL, this.state.apiSettings).then( res => { const searchResultsList = res.data; this.setState({ searchResultsList : searchResultsList.results })});
+		axios.get(this.state.requestURL, this.state.apiSettings).then( res => { const searchResultsList = res.data; this.setState({ searchResultsList : searchResultsList.results,
+																																	resultAmount : searchResultsList.count })});
+		
 	}
 		
 	render() {
-			return(
-				<div className="list-group">
-					{ this.state.searchResultsList.map(searchResultsList => 
-					<Link className ="list-group-item list-group-item-action flex-column align-items-start" id="textSearch" to={{ pathname: "/juvafestival", state:{
-																																	eventName : searchResultsList.title,
-																																	eventPlace : searchResultsList.location,
-																																	eventDate : searchResultsList.start,
-																																	eventCategory : searchResultsList.category,
-																																	} }}>
-						<div className="d-flex w-100 justify-content-between">
-							<h5 className="mb-1">{searchResultsList.title}</h5>
-						</div>
-						<p className="mb-1 ml-2"> Data: {searchResultsList.start} </p>
-						<small className="ml-2">Dentro de 0 dias </small>
-					</Link>
-					)
-					}
-				</div>
-				
-			);
+		let resultsnavigation;
+		if(this.state.apiSettings.params.offset==0){
+			resultsnavigation=(
+				<div className="row">
+					<div className="col"> </div>
+					<div className="col">
+						<button className = "btn btn-link" value={this.state.apiSettings.params.offset} onClick={this.nextpage.bind(this)}>Página Seguinte</button>
+					</div>
+				</div>);
+		}else if(this.state.apiSettings.params.offset>0){
+			resultsnavigation=(
+				<div className="row">
+					<div className="col">
+						<button className = "btn btn-link" value={this.state.apiSettings.params.offset} onClick={this.previouspage.bind(this)}>Página Anterior</button>
+					</div>
+					<div className="col">
+						<button className = "btn btn-link" value={this.state.apiSettings.params.offset} onClick={this.nextpage.bind(this)}>Página Seguinte</button>
+					</div>
+				</div>);
+		} else if(this.state.apiSettings.params.offset>=this.state.resultAmount){
+			resultsnavigation=(
+				<div className="row">
+					<div className="col">
+						<button className = "btn btn-link" value={this.state.apiSettings.params.offset} onClick={this.previouspage.bind(this)}>Página Anterior</button>
+					</div>
+					<div className="col">
+						
+					</div>
+				</div>);
+		}
+		return(
+			<div className="list-group">
+				{ this.state.searchResultsList.map(searchResultsList =>
+				<Link className ="list-group-item list-group-item-action flex-column align-items-start" id="textSearch" to={{ pathname: "/juvafestival", state:{
+																																eventName : searchResultsList.title,
+																																eventPlace : searchResultsList.location,
+																																eventDate : searchResultsList.start,
+																																eventCategory : searchResultsList.category,
+																																} }}>
+					<div className="d-flex w-100 justify-content-between">
+						<h5 className="mb-1 font-weight-bold">{searchResultsList.title}</h5>
+					</div>
+					<div className="mb-1 ml-2 list-inline-item"> Inicio de evento: {(searchResultsList.start).split("T", 1)}</div>
+					<div className="mb-1 ml-3 list-inline-item">  Fim de evento: {(searchResultsList.end).split("T", 1)} </div>
+					<div className="mb-1 ml-3 list-inline-item">  Local: {searchResultsList.location}
+					</div>
+					<br/><small className="ml-2">Dentro de 0 dias </small>
+				</Link>
+				)
+				}
+				{resultsnavigation};
+			</div>
+			
+		);
 	}
 }
 
@@ -428,6 +511,20 @@ class SignRideForm extends React.Component{
 			</>
 			);
 		}
+	}
+
+	function getAddress(coordinates){
+		console.log(coordinates);
+		const apiSettings = {
+			params : {
+				"key": "8fc7cde8f94f2b",
+				"q" : coordinates,
+				"format" : "json",
+			}
+		};
+
+		const baseURL = "https://eu1.locationiq.com/v1/search.php?";
+		axios.get(baseURL, apiSettings).then( res => { const address = res.data; return address});
 	}
 
 

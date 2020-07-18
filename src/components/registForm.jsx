@@ -42,30 +42,31 @@ class RegistForm extends React.Component{
 	}
     render() {
     return (
-      <div className="container">
-        <h2> Registar </h2>
+	<div className="container">
+		<h2> Registar </h2>
 		<br/>
-        <form id="registForm">
-            <input type="email" id="email" placeholder="E-mail" required={true} value={this.state.email} onChange={this.handleEmailChange.bind(this)}/>
-	    	<br/><br/>
-            <input type="text" id="firstname" placeholder="Primeiro Nome" required={true} value={this.state.firstName} onChange={this.handleFirstNameChange.bind(this)}/>
-	    	<br/><br/>
-	    	<input type="text" id="lastname" placeholder="Último Nome" required={true} value={this.state.lastName} onChange={this.handleLastNameChange.bind(this)}/>
-	    	<br/><br/>
-	    	<input type="password" id="password1" placeholder="Password" required={true} value={this.state.password} onChange={this.handlePasswordChange.bind(this)}/>
-	    	<br/><br/>
-	    	<input type="password" id="password2" placeholder="Repita a Password" required={true} value={this.state.passwordConfirm} onChange={this.handlePasswordConfirmChange.bind(this)}/><span id="passwordNotMatch" style={this.passwordSpan}></span>
-	    	<br/><br/>
+		<form id="registForm">
+			<input type="email" id="email" placeholder="E-mail" required={true} value={this.state.email} onChange={this.handleEmailChange.bind(this)}/>
+			<br/><br/>
+			<input type="text" id="firstname" placeholder="Primeiro Nome" required={true} value={this.state.firstName} onChange={this.handleFirstNameChange.bind(this)}/>
+			<br/><br/>
+			<input type="text" id="lastname" placeholder="Último Nome" required={true} value={this.state.lastName} onChange={this.handleLastNameChange.bind(this)}/>
+			<br/><br/>
+			<input type="password" id="password1" placeholder="Password" required={true} value={this.state.password} onChange={this.handlePasswordChange.bind(this)}/>
+			<br/><br/>
+			<input type="password" id="password2" placeholder="Repita a Password" required={true} value={this.state.passwordConfirm} onChange={this.handlePasswordConfirmChange.bind(this)}/><span id="passwordNotMatch" style={this.passwordSpan}></span>
+			<br/><br/>
 			<input type="text" pattern ="[0-9]*" id="phonenumber" placeholder="Telemovel" size="9" required={true} value={this.state.phoneNumber} onChange={this.handlePhoneNumberChange.bind(this)}/>
 			<br/><br/>
 			<button id="registbutton" className="btn btn-success" onClick={this.handleRegister.bind(this)}>Enviar</button>
-	  </form>
-      </div>
-  );
-  }
+		</form>
+	</div>
+);
+}
 
 	handleRegister(){
 		const {password, passwordConfirm} = this.state;
+
 		if(password !== passwordConfirm){
 			ReactDOM.render(" Your passwords do not match", document.getElementById("passwordNotMatch"))
 		}else{
@@ -73,7 +74,7 @@ class RegistForm extends React.Component{
 			localStorage.setItem("password", this.state.password);
 			localStorage.setItem("firstname", this.state.firstName);
 		}
-  	}
+	}
 }
 
 
