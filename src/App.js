@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Switch, Route } from "react-router-dom";
-import "./index.css";
+import './App.css';
 import Header from "./components/header";
 import Footer from "./components/footer";
 import LoginForm from "./components/loginform";
