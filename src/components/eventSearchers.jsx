@@ -402,12 +402,13 @@ class CategorySearchResults extends React.Component{
 		var yyyy = today.getFullYear();
 
 		var d1 = new Date (yyyy + "/" + nn + "/" + dd);
-		
 		var td = String(eventDate).replace(/-/g,"/");
-
 		var d2 = new Date(td);
 
-		return (Math.abs(d1 - d2));
+		var cd = 24 * 60 * 60 * 1000;
+		var daysLeft = Math.floor(Math.abs(d1 - d2) / cd);
+
+		return (daysLeft);
 	}
 
 	componentDidMount(){
@@ -471,7 +472,7 @@ class CategorySearchResults extends React.Component{
 					</div>
 					<div className="mb-1 ml-2 list-inline-item"> Inicio de evento: {(searchResultsList.start).split("T", 1)}</div>
 					<div className="mb-1 ml-3 list-inline-item">  Fim de evento: {(searchResultsList.end).split("T", 1)} </div>
-					<div className="mb-1 ml-3 list-inline-item">  Local: {searchResultsList.location}
+					<div className="mb-1 ml-3 list-inline-item">  Local: {searchResultsList.entities.map(entity => entity.name)}
 					</div>
 					<br/><small className="ml-2">Dentro de {this.getTimeLeft((searchResultsList.start).split("T", 1))} dias </small>
 				</Link>
