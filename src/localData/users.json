@@ -1,0 +1,7 @@
+{
+    "registered_users": [
+        {"email": "tatatat@email.com", "password" : "dasda","name" : "Zé"},
+        {"email": "gggg@email.com", "password" : "1234","name" : "Manel"},
+        {"email": "omeuemail@email.com", "password" : "dasda","name" : "Paulo"}
+    ]
+}

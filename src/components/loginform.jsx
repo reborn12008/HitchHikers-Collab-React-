@@ -1,4 +1,5 @@
 import React from "react";
+import users from "../localData/users.json"
 
 
 class LoginForm extends React.Component{
@@ -42,15 +43,20 @@ class LoginForm extends React.Component{
   );
   }
 
-  handleLogin(){
+  handleLogin(e){
     if(this.state.email === this.state.correctEmail && this.state.password === this.state.correctPassword){
-      console.log("Logged!");
       localStorage.setItem("logged", 1);
     }else{
-      console.log("Not Logged!");
+      users.registered_users.map((data) => {
+          if(this.state.email === data.email && this.state.password === data.password){
+            localStorage.setItem("logged", 1);
+            localStorage.setItem("firstname", data.name);
+          }
+        }
+      )};
     }
   }
-}
+
 
 
 export default LoginForm;

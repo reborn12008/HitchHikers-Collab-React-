@@ -13,17 +13,19 @@ class ChatBox extends React.Component{
             }
         }
     }
+
+    chatIcon={
+        widht: "60px",
+        height: "50px",
+    }
     
-  render() {
+    render() {
     return (
     <>
-    <Switch>
-        <Route exact path="/chat" component={ChatPage}/>
-    </Switch> 
-    
     <div className="float-right btn-group dropup" style={this.state.style}>
         <button className="btn btn-secondary drpdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Conversas de Grupo
+            Conversas de Grupo 
+            <img className="ml-1" style={this.chatIcon} src={require("../images/chat_icon.png")} alt="Chat Icon"/>
         </button>
         <div className="dropdown-menu">
             <Link className="dropdown-item" to={{ pathname: "/chat", state:{chatName:"MISTER AMERICA"} }}>
@@ -36,23 +38,6 @@ class ChatBox extends React.Component{
     </div>
     </>
     );
-  }
-}
-
-class ChatPage extends React.Component{
-    constructor(props){
-        super(props);
-
-        this.state={
-            chatName : this.props.location.state.chatName,
-        }
-    }
-    render(){
-        return(
-        <>
-        This is chat {this.state.chatName}
-        </>
-        );
     }
 }
 

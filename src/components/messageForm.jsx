@@ -1,4 +1,5 @@
 import React from "react";
+import ChatBox from "./chatBox";
 
 
 class MessageForm extends React.Component{
@@ -18,6 +19,7 @@ class MessageForm extends React.Component{
 	    <br/><br/><br/>
 	    <button type="submit" className="btn btn-info">Enviar</button>
 	  </form>
+    <ChatBox/>
       </div>
   );
   }

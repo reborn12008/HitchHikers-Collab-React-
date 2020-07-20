@@ -3,7 +3,10 @@ import axios from "axios";
 import '../App.css';
 import { BrowserRouter as Switch, Route, Link} from "react-router-dom";
 import { LazyLoadImage} from 'react-lazy-load-image-component';
-import { Map, Marker, Popup, TileLayer } from 'react-leaflet'
+import { Map, Marker, Popup, TileLayer } from 'react-leaflet';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css'
+import ChatBox from "./chatBox";
 
 
 var categories = {
@@ -31,7 +34,8 @@ class SearchPageContent extends React.Component{
 				<Route exact path="/giverideForm" component={GiveRideForm}/>
 				<Route exact path="/findrideForm" component={FindRideForm}/>
 				<Route exact path="/signrideForm" component={SignRideForm}/>
-        	</Switch>        
+        	</Switch> 
+			<ChatBox/>
 			
 		</>
 	);
@@ -165,6 +169,7 @@ class TextSearchResults extends React.Component{
 				params : {
 					"start.gte": minDate,
 					"offset": 0,
+					"sort" : "start",
 					"q" : this.props.location.state.textInput,
 				}
 			},
@@ -185,6 +190,7 @@ class TextSearchResults extends React.Component{
 				},
 				params : {
 					"start.gte": this.props.location.minDate,
+					"sort" : "start",
 					"offset": newOffset,
 					"q" : this.props.location.state.textInput,
 				}
@@ -209,6 +215,7 @@ class TextSearchResults extends React.Component{
 				},
 				params : {
 					"start.gte": this.props.location.minDate,
+					"sort" : "start",
 					"offset": newOffset,
 					"q" : this.props.location.state.textInput,
 				}
@@ -238,8 +245,8 @@ class TextSearchResults extends React.Component{
 
 	componentDidMount(){
 		axios.get(this.state.requestURL, this.state.apiSettings).then( res => { const searchResultsList = res.data; this.setState({ searchResultsList : searchResultsList.results,
-																																	resultAmount : searchResultsList.count })});
-		
+																																	resultAmount : searchResultsList })});
+																																	
 	}
 		
 	render() {
@@ -273,6 +280,14 @@ class TextSearchResults extends React.Component{
 					</div>
 				</div>);
 		}
+		if(this.state.resultAmount === 0){
+			resultsnavigation=(
+				<>
+					<h3>Não foram encontrados resultados relacionados com a sua pesquisa!</h3>
+					<a href="/festivals"> Regressar á página de pesquisa</a>
+				</>
+			);
+		}
 		return(
 			<div className="list-group">
 				{ this.state.searchResultsList.map(searchResultsList =>
@@ -281,6 +296,8 @@ class TextSearchResults extends React.Component{
 																																eventPlace : searchResultsList.location,
 																																eventSpot : searchResultsList.entities.map(entity => entity.name),
 																																eventDate : searchResultsList.start,
+																																eventEndDate : searchResultsList.end,
+																																eventDescription : searchResultsList.description,
 																																eventCategory : searchResultsList.category,
 																																} }}>
 					<div className="d-flex w-100 justify-content-between">
@@ -318,6 +335,7 @@ class CategorySearchResults extends React.Component{
 					"start.lte" : this.props.location.state.endDate,
 					"country" : this.props.location.state.countrySelected,
 					"category" : this.props.location.state.categorySelected,
+					"sort" : "start",
 					"offset": 0,
 				}
 			},
@@ -340,6 +358,7 @@ class CategorySearchResults extends React.Component{
 					"start.lte" : this.props.location.state.endDate,
 					"country" : this.props.location.state.countrySelected,
 					"category" : this.props.location.state.categorySelected,
+					"sort" : "start",
 					"offset": newOffset,
 				}
 			},
@@ -365,6 +384,7 @@ class CategorySearchResults extends React.Component{
 					"start.gte" : this.props.location.state.startDate,
 					"start.lte" : this.props.location.state.endDate,
 					"country" : this.props.location.state.countrySelected,
+					"sort" : "start",
 					"category" : this.props.location.state.categorySelected,
 				}
 			},
@@ -427,6 +447,14 @@ class CategorySearchResults extends React.Component{
 					</div>
 				</div>);
 		}
+		if(this.state.resultAmount === 0){
+			resultsnavigation=(
+				<>
+					<h3>Não foram encontrados resultados relacionados com a sua pesquisa!</h3>
+					<a href="/festivals"> Regressar á página de pesquisa</a>
+				</>
+			);
+		}
 		return(
 			<div className="list-group">
 				{ this.state.searchResultsList.map(searchResultsList =>
@@ -434,7 +462,9 @@ class CategorySearchResults extends React.Component{
 																																eventName : searchResultsList.title,
 																																eventPlace : searchResultsList.location,
 																																eventDate : searchResultsList.start,
+																																eventEndDate : searchResultsList.end,
 																																eventCategory : searchResultsList.category,
+																																eventDescription : searchResultsList.description
 																																} }}>
 					<div className="d-flex w-100 justify-content-between">
 						<h5 className="mb-1 font-weight-bold">{searchResultsList.title}</h5>
@@ -462,8 +492,10 @@ class EventInfo extends React.Component{
 			eventName : this.props.location.state.eventName,
 			eventPlace : String(this.props.location.state.eventPlace).split(","),
 			eventDate : this.props.location.state.eventDate,
+			eventEndDate : this.props.location.state.eventEndDate,
 			eventSpot : this.props.location.state.eventSpot,
 			eventCategory : this.props.location.state.eventCategory,
+			eventDescription : this.props.location.state.eventDescription,
 			requestURL : "https://eu1.locationiq.com/v1/reverse.php?",
 			apiSettings:{
 				headers: {
@@ -479,7 +511,6 @@ class EventInfo extends React.Component{
 			},
 			fullAddress : "",
 		}
-		
 	}
 
 	componentDidMount(){
@@ -545,15 +576,22 @@ class EventInfo extends React.Component{
 		}
 		return(
 			<div className="container">
-				<div className="card" style={{width:"35rem"}}>
-					<LazyLoadImage className="card-img-top" src={imgsrc} alt="Image related to event"/>
-					<div className="card-body">
-						<p className="card-text">Nome: {this.state.eventName}</p>
-						<p className="card-text">Morada: {adressOutput}</p>
-						<p className="card-text">Entidade Associada: {this.state.eventSpot}</p>
-						<p className="card-text">Inicio do evento: {(this.state.eventDate).split("T", 1)}</p>
-						<br/><br/>
-						{loggedOptions}
+				<div className="row">
+					<div className="col">
+						<div className="card" style={{width:"35rem"}}>
+							<LazyLoadImage className="card-img-top" src={imgsrc} alt="Image related to event"/>
+							<div className="card-body">
+								<p className="card-text">Nome: {this.state.eventName}</p>
+								<p className="card-text">Morada: {adressOutput}</p>
+								<p className="card-text">Entidade Associada: {this.state.eventSpot}</p>
+								<p className="card-text">Inicio do evento: {(this.state.eventDate).split("T", 1)}  Fim do evento:{(this.state.eventEndDate).split("T",1)}</p>
+								<br/><br/>
+								{loggedOptions}
+							</div>
+						</div>
+					</div>
+					<div className="col">
+						{this.state.eventDescription}
 					</div>
 				</div>
 			</div>
@@ -579,6 +617,23 @@ class GiveRideForm extends React.Component{
 		padding:"30px",
 	}
 
+	submit = () => {
+		confirmAlert({
+			title: 'Confirmar Inscrição',
+			message: 'Tem a certeza que pretende realizar a sua inscrição com estes dados?',
+			buttons: [
+			{
+				label: 'Confirmar',
+				onClick: () => window.location.href="/"
+			},
+			{
+				label: 'Cancelar',
+				onClick: () => ""
+			}
+			],
+		});
+	};
+
 	componentDidMount(){
 		document.getElementsByClassName("leaflet-container")[0].style.height ="100%";
 		document.getElementsByClassName("leaflet-container")[0].style.width ="100%";
@@ -589,12 +644,12 @@ class GiveRideForm extends React.Component{
 			<div className="row">
 				<div className="col-6" style={this.formStyle}>
 					<div className="d-flex justify-content-center">
-						<h2>{this.state.eventName}</h2>
+						<h3>{this.state.eventName}</h3>
 					</div>
 					<form>
 						<div className="form-row">
 							<div className="form-group col-md-6">
-								<label>Tipo de carro:</label>
+								<label htmlFor="carSelect">Tipo de carro:</label>
 								<select className="custom-select mr-sm-2" id="carSelect">
 									<option selected>Escolha uma opção</option>
 									<option>SUV</option>
@@ -606,31 +661,31 @@ class GiveRideForm extends React.Component{
 								</select>
 							</div>
 							<div className="form-group col-md-6">
-								<label>Lotação máxima:</label>
-								<input type="number" className="form-control"/>
+								<label htmlFor="maxLotationInput">Lotação máxima:</label>
+								<input type="number" className="form-control" id="maxLotationInput"/>
 							</div>
 						</div>
 						<div className="form-row">
 							<div className="form-group col-md-6">
-								<label>Data de partida:</label>
-								<input type="date" className="form-control"/>
+								<label htmlFor="leaveDateInput">Data de partida:</label>
+								<input type="date" className="form-control" id="leaveDateInput"/>
 							</div>
 							<div className="form-group col-md-6">
-								<label>Data de regresso: </label>
-								<input type="date" className="form-control"/>
+								<label htmlFor="returnDateInput">Data de regresso: </label>
+								<input type="date" className="form-control" id="returnDateInput"/>
 							</div>
 						</div>
 						<div className="form-row">
-							<label>Ponto de Partida</label>
-							<input type="text" className="form-control"/>
+							<label htmlFor="locationlatlong">Ponto de Partida</label>
+							<input type="text" className="form-control" id="locationlatlong"/>
 						</div>
 							
 						<div className="form-row">
-							<label>Adicionar comentário:</label>
-							<textarea className="form-control" rows="3"/>
+							<label htmlFor="commentInput">Adicionar comentário:</label>
+							<textarea className="form-control" rows="3" id="commentInput"/>
 						</div>
 						<div className="form-row mt-3">
-							<button className="btn btn-primary mx-auto">Confirmar</button>
+							<a onClick={this.submit} className="btn btn-primary mx-auto">Confirmar</a>
 						</div>
 						</form>
 				</div>
@@ -662,13 +717,13 @@ class FindRideForm extends React.Component{
 				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "José Maria", eventPlace : this.state.availableRidesList.eventPlace}}}>
 					José Maria
 				</Link>
-				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "Maria José"}}}>
+				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "Maria José", eventPlace : this.state.availableRidesList.eventPlace}}}>
 					Maria José
 				</Link>
-				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "Tiago Joaquim"}}}>
+				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "Tiago Joaquim", eventPlace : this.state.availableRidesList.eventPlace}}}>
 					Tiago Joaquim
 				</Link>
-				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "Maria Francisca"}}}>
+				<Link className="list-group-item list-group-item-action" to={{ pathname: "/signrideForm" , state:{personName : "Maria Francisca", eventPlace : this.state.availableRidesList.eventPlace}}}>
 					Maria Francisca
 				</Link>
 
@@ -684,6 +739,7 @@ class SignRideForm extends React.Component{
 		this.state = {
 			driverPersonName : this.props.location.state.personName,
 			eventPlace : this.props.location.state.eventPlace,
+			accompaniedBy : "",
 		}
 	}
 
@@ -692,33 +748,87 @@ class SignRideForm extends React.Component{
 		width:"100%",
 	}
 
+	signRideFormstyle = {
+		border : "1px solid #33ccff",
+		padding: "15px",
+	}
+
+	submit = () => {
+		confirmAlert({
+			title: 'Confirmar Inscrição',
+			message: 'Tem a certeza que pretende realizar a sua inscrição com estes dados?',
+			buttons: [
+			{
+				label: 'Confirmar',
+				onClick: () => window.location.href="/"
+			},
+			{
+				label: 'Cancelar',
+				onClick: () => ""
+			}
+			],
+		});
+	};
+	
+
 	componentDidMount(){
 		document.getElementsByClassName("leaflet-container")[0].style.height ="100%";
 		document.getElementsByClassName("leaflet-container")[0].style.width ="100%";
 	}
+
+	changeRadioCheck(e){
+		this.setState({
+			accompaniedBy : e.target.value,
+		});
+		if(e.target.value == 1){
+			document.getElementById("amountCompany").style.display = "block";
+		}else{
+			document.getElementById("amountCompany").style.display = "none";
+		}
+	}
+	
 
 	render(){
 		const position = [this.state.eventPlace[1], this.state.eventPlace[0]];
 		console.log(position);
 		return(
 			<div className="row">
-				<div className="col">
-					Condutor: {this.state.driverPersonName}
-					<form className="was-validated">
-						<label>A sua localização: </label>
-						<input type="text"/><br/>
-						<label>Irá acompanhado?</label>
-						<div className="custom-control custom-radio custom-control-inline">
-							<input type="radio" id ="signRideRadioBtn" name ="signRideRadioBtn" className="custom-control-input"/>
-							<label className="custom-control-label">Sim</label>
+				<div className="col" style={this.signRideFormstyle}>
+					<br/>
+					<h3>Condutor: {this.state.driverPersonName}</h3>
+					<form className="ml-2">
+						<div className="form-row mt-2">
+							<label htmlFor="locationlatlong">A sua localização: </label>
+							<input type="text" className="form-control" id="locationlatlong"/>
 						</div>
-						<div className="custom-control custom-radio custom-control-inline">
-							<input type="radio" id ="signRideRadioBtn" name ="signRideRadioBtn" className="custom-control-input"/>
-							<label className="custom-control-label">Não</label>
-						</div><br/>
+						<div className="form-row">
+							<fieldset className="form-group col-md-6">
+								<legend>Irá acompanhado?</legend>
+								<div className="form-check">
+									<label className="form-check-label">
+										<input type="radio" id ="companyOptionYes" className="form-check-input" value="1" checked={this.state.accompaniedBy === "1"} onChange={this.changeRadioCheck.bind(this)}/>
+										Sim
+									</label>
+								</div>
+								<div className="form-check">
+									<label className="form-check-label">
+										<input type="radio" id ="companyOptionNo" className="form-check-input" value="0" checked={this.state.accompaniedBy === "0"} onChange={this.changeRadioCheck.bind(this)}/>
+										Não
+									</label>
+								</div>
+							</fieldset>
+							<div id="amountCompany" className="form-group col-md-6" style={{display: "none"}}>
+								<br/>
+								<label htmlFor="peopleAmountInput">Quantas pessoas?</label>
+								<input id="peopleAmountInput" type="number" min="1"/>
+							</div>
+						</div>
+
+			
+
 						<label>Comentários: </label><br/>
-						<textarea/><br/><br/>
-						<a className="btn btn-success" href="/">Submeter</a>
+						<textarea className="form-control" rows="2"/><br/><br/>
+						<a className="btn btn-success mx-auto" onClick={this.submit}>Submeter</a>
 						
 					</form>
 				</div>
@@ -734,19 +844,32 @@ class SignRideForm extends React.Component{
 
 	
 	function loadMap(position){
-		console.log(position);
+		var mapMarker = (<Marker position={position}>
+							<Popup>Your location<br />This is you location</Popup>
+						</Marker>);
+
+		function handleMapClick(e) {
+			const { lat, lng } = e.latlng;
+			console.log(`Clicked at ${lat}, ${lng}`);
+			var placeInput = document.getElementById("locationlatlong");
+			placeInput.value = String(lat + "," + lng);
+			var newPosition = [lat, lng];
+			this.mapMarker = (<Marker position= {newPosition}>
+							<Popup>Your location<br />This is you location</Popup>
+						</Marker>);
+		}
 		return(
-			<Map center={position} zoom={13} >
+			<Map center={position} zoom={13} onClick={handleMapClick}>
 				<TileLayer
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 					attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
 				/>
-				<Marker position={position}>
-					<Popup>A pretty CSS3 popup.<br />Easily customizable.</Popup>
-				</Marker>
+				{mapMarker}
+				
 			</Map>
 		);
 	}
+	
 
 
 export default SearchPageContent
